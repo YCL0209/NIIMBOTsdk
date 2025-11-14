@@ -293,6 +293,31 @@
       </div>
     </div>
 
+    <!-- 產品標籤打印 -->
+    <div class="section">
+      <div class="section-title">產品標籤打印</div>
+      <div class="form-group">
+        <label>品號</label>
+        <input type="text" id="productNo" value="M021AA-00144" placeholder="輸入產品品號">
+      </div>
+      <div class="form-group">
+        <label>品名</label>
+        <input type="text" id="productName" value="DP3K:G3P:機台風扇線組" placeholder="輸入產品品名">
+      </div>
+      <div class="form-group">
+        <label>規格</label>
+        <input type="text" id="productSpec" value="[OAC-TJ011A] 838.001.F005-A" placeholder="輸入產品規格">
+      </div>
+      <div class="button-group">
+        <button class="btn-primary" onclick="printProductLabel()">打印單張產品標籤</button>
+        <button class="btn-secondary" onclick="batchPrintFromMD()">從 MD 檔批量打印</button>
+      </div>
+      <p style="margin-top: 10px; color: #888; font-size: 13px;">
+        💡 提示：標籤格式為三行表格，包含品號、品名、規格<br>
+        📄 批量打印：自動讀取 2025-11-14-線材.md 並打印所有產品標籤
+      </p>
+    </div>
+
     <!-- 日志 -->
     <div class="section">
       <div class="section-title">操作日志</div>
