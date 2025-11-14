@@ -1,0 +1,30 @@
+{
+  "name": "jingchen-printer-module",
+  "version": "1.0.0",
+  "description": "精臣打印机 TypeScript 封装模块",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "webpack serve --config webpack.config.js --open",
+    "dev": "webpack --config webpack.config.js --watch"
+  },
+  "keywords": [
+    "jingchen",
+    "printer",
+    "barcode",
+    "label",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.0",
+    "webpack-dev-server": "^4.15.0",
+    "ts-loader": "^9.4.0",
+    "html-webpack-plugin": "^5.5.0"
+  }
+}
