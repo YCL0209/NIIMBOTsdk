@@ -297,24 +297,63 @@
     <div class="section">
       <div class="section-title">產品標籤打印</div>
       <div class="form-group">
+        <label>單號</label>
+        <input type="text" id="orderNo" value="5103-20251009010" placeholder="輸入單號">
+      </div>
+      <div class="form-group">
         <label>品號</label>
-        <input type="text" id="productNo" value="M021AA-00144" placeholder="輸入產品品號">
+        <input type="text" id="productNo" value="M02208-00012" placeholder="輸入產品品號">
       </div>
       <div class="form-group">
         <label>品名</label>
-        <input type="text" id="productName" value="DP3K:G3P:機台風扇線組" placeholder="輸入產品品名">
+        <input type="text" id="productName" value="HRZVV-SB(2464)24AWG-10C" placeholder="輸入產品品名">
       </div>
       <div class="form-group">
         <label>規格</label>
-        <input type="text" id="productSpec" value="[OAC-TJ011A] 838.001.F005-A" placeholder="輸入產品規格">
+        <input type="text" id="productSpec" value="QS001-0027" placeholder="輸入產品規格">
+      </div>
+      <div class="form-group">
+        <label>MD 檔案選擇（批量列印用）</label>
+        <select id="mdFileSelect">
+          <option value="2025-11-14-線材.md">2025-11-14-線材.md (舊版格式)</option>
+          <option value="2025-11-19-新批次.md" selected>2025-11-19-新批次.md (9訂單+20產品)</option>
+          <option value="2025-11-20-新訂單.md">2025-11-20-新訂單.md (4訂單+4產品)</option>
+        </select>
       </div>
       <div class="button-group">
         <button class="btn-primary" onclick="printProductLabel()">打印單張產品標籤</button>
         <button class="btn-secondary" onclick="batchPrintFromMD()">從 MD 檔批量打印</button>
+        <button class="btn-danger" onclick="stopPrinting()" id="stopBtn" style="display:none;">🛑 終止列印</button>
       </div>
       <p style="margin-top: 10px; color: #888; font-size: 13px;">
         💡 提示：標籤格式為三行表格，包含品號、品名、規格<br>
-        📄 批量打印：自動讀取 2025-11-14-線材.md 並打印所有產品標籤
+        📄 批量列印：從下拉選單選擇 MD 檔案，自動判斷格式並列印<br>
+        🎯 自動添加頭尾測試標籤，避免第一張和最後一張跑版
+      </p>
+    </div>
+
+    <!-- 合併標籤測試 -->
+    <div class="section">
+      <div class="section-title">合併標籤測試（單號+產品一張）</div>
+      <div class="button-group">
+        <button class="btn-primary" onclick="testCombinedLabelWithQR()">列印標籤</button>
+        <button class="btn-secondary" onclick="previewCombinedLabel()">預覽標籤</button>
+      </div>
+      <p style="margin-top: 10px; color: #888; font-size: 13px;">
+        📋 3行格式：單號/品號/規格 + 底部條碼<br>
+        👁️ 預覽功能：先看標籤效果，避免浪費紙張
+      </p>
+      <div id="labelPreviewArea" style="margin-top: 15px; text-align: center;"></div>
+    </div>
+
+    <!-- 診斷測試 -->
+    <div class="section">
+      <div class="section-title">診斷測試</div>
+      <div class="button-group">
+        <button class="btn-warning" onclick="testRectangleOnly()">只印矩形（診斷截斷問題）</button>
+      </div>
+      <p style="margin-top: 10px; color: #888; font-size: 13px;">
+        🔍 用於定位畫布截斷問題：只印一個 26mm 高的矩形，檢查是否被截斷
       </p>
     </div>
 
