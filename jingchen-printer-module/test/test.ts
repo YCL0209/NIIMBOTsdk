@@ -25,11 +25,15 @@ function log(message: string) {
 }
 
 // 更新狀態
-function updateStatus(text: string, isConnected: boolean) {
+function updateStatus(text: string, isConnected: boolean, showRescan: boolean = false) {
   const status = document.getElementById('status');
+  const rescanBtn = document.getElementById('rescanBtn');
   if (status) {
     status.textContent = text;
     status.className = 'status' + (isConnected ? ' connected' : '');
+  }
+  if (rescanBtn) {
+    rescanBtn.style.display = showRescan ? 'block' : 'none';
   }
 }
 
@@ -43,8 +47,8 @@ async function autoConnect() {
     const printers = await printer.scanUSBPrinters();
 
     if (printers.length === 0) {
-      updateStatus('未找到打印機', false);
-      log('未找到 USB 打印機，請確認打印機已連接');
+      updateStatus('未找到打印機', false, true);
+      log('未找到 USB 打印機，請確認打印機已連接後點擊重新掃描');
       return;
     }
 
@@ -142,9 +146,17 @@ function init() {
   autoConnect();
 }
 
+// 重新掃描
+async function rescan() {
+  log('重新掃描打印機...');
+  updateStatus('掃描中...', false, false);
+  await autoConnect();
+}
+
 // 暴露到全局
 (window as any).printBarcode = printBarcode;
 (window as any).previewBarcode = previewBarcode;
+(window as any).rescan = rescan;
 
 // 啟動
 if (document.readyState === 'loading') {
