@@ -1,370 +1,144 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>精臣打印机 - TypeScript 模块测试</title>
+  <title>精臣條碼打印機</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       padding: 20px;
-      background: #f5f5f5;
     }
-
     .container {
-      max-width: 1200px;
-      margin: 0 auto;
       background: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      overflow: hidden;
     }
-
-    h1 {
-      color: #333;
-      margin-bottom: 10px;
-      font-size: 28px;
-    }
-
-    .subtitle {
-      color: #666;
-      margin-bottom: 30px;
-      font-size: 14px;
-    }
-
-    .section {
-      margin-bottom: 30px;
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
       padding: 20px;
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
+      text-align: center;
     }
-
-    .section-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: #444;
-      margin-bottom: 15px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #4CAF50;
-    }
-
+    .header h1 { font-size: 20px; margin-bottom: 8px; }
     .status {
       display: inline-block;
       padding: 4px 12px;
-      border-radius: 4px;
+      border-radius: 20px;
       font-size: 12px;
-      font-weight: 500;
-      margin-left: 10px;
+      background: rgba(255,255,255,0.2);
     }
-
-    .status.connected {
-      background: #4CAF50;
-      color: white;
-    }
-
-    .status.disconnected {
-      background: #f44336;
-      color: white;
-    }
-
-    .button-group {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 15px;
-    }
-
-    button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.3s;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
-
-    button:active {
-      transform: translateY(0);
-    }
-
-    .btn-primary {
-      background: #4CAF50;
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: #45a049;
-    }
-
-    .btn-secondary {
-      background: #2196F3;
-      color: white;
-    }
-
-    .btn-secondary:hover {
-      background: #0b7dda;
-    }
-
-    .btn-warning {
-      background: #FF9800;
-      color: white;
-    }
-
-    .btn-warning:hover {
-      background: #e68900;
-    }
-
-    .btn-danger {
-      background: #f44336;
-      color: white;
-    }
-
-    .btn-danger:hover {
-      background: #da190b;
-    }
-
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    label {
+    .status.connected { background: #4CAF50; }
+    .status.error { background: #f44336; }
+    .form { padding: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
       display: block;
-      margin-bottom: 5px;
-      font-weight: 500;
-      color: #555;
-      font-size: 14px;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 6px;
     }
-
-    input, select {
+    .form-group input, .form-group select {
       width: 100%;
-      padding: 8px 12px;
+      padding: 10px 12px;
       border: 1px solid #ddd;
-      border-radius: 4px;
+      border-radius: 8px;
       font-size: 14px;
     }
-
-    input:focus, select:focus {
+    .form-group input:focus, .form-group select:focus {
       outline: none;
-      border-color: #4CAF50;
+      border-color: #667eea;
     }
-
-    .log {
-      background: #f8f8f8;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 15px;
-      max-height: 300px;
-      overflow-y: auto;
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      line-height: 1.6;
+    .row { display: flex; gap: 12px; }
+    .row .form-group { flex: 1; }
+    .buttons { display: flex; gap: 10px; margin-top: 20px; }
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s;
     }
-
-    .log-entry {
-      margin-bottom: 8px;
-      padding: 4px 8px;
-      border-radius: 3px;
-    }
-
-    .log-entry.info {
-      background: #e3f2fd;
-      color: #1976d2;
-    }
-
-    .log-entry.success {
-      background: #e8f5e9;
-      color: #388e3c;
-    }
-
-    .log-entry.error {
-      background: #ffebee;
-      color: #c62828;
-    }
-
-    .log-entry.warn {
-      background: #fff3e0;
-      color: #f57c00;
-    }
-
-    .preview-area {
-      margin-top: 15px;
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: #667eea; color: white; }
+    .btn-secondary { background: #e0e0e0; color: #333; }
+    .preview {
+      margin: 0 20px 20px;
+      padding: 20px;
+      background: #fafafa;
+      border-radius: 8px;
       text-align: center;
+      min-height: 80px;
     }
-
-    .preview-area img {
-      max-width: 100%;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 10px;
-      background: white;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
+    .preview img { max-width: 100%; border: 1px solid #eee; }
+    .log {
+      border-top: 1px solid #eee;
+      padding: 12px 20px;
+      font-size: 12px;
+      color: #888;
+      max-height: 100px;
+      overflow-y: auto;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>精臣打印机 - TypeScript 模块测试</h1>
-    <p class="subtitle">Jingchen Printer TypeScript Module Test Page</p>
-
-    <!-- 连接状态 -->
-    <div class="section">
-      <div class="section-title">
-        连接状态
-        <span id="serviceStatus" class="status disconnected">服务未连接</span>
-        <span id="printerStatus" class="status disconnected">打印机未连接</span>
-      </div>
-      <div class="button-group">
-        <button class="btn-primary" onclick="connectService()">连接打印服务</button>
-        <button class="btn-danger" onclick="disconnectService()">断开打印服务</button>
-      </div>
+    <div class="header">
+      <h1>精臣條碼打印機</h1>
+      <span id="status" class="status">連接中...</span>
     </div>
 
-    <!-- 打印机管理 -->
-    <div class="section">
-      <div class="section-title">打印机管理</div>
-      <div class="button-group">
-        <button class="btn-secondary" onclick="scanUSBPrinters()">扫描USB打印机</button>
-        <button class="btn-secondary" onclick="scanWiFiPrinters()">扫描WiFi打印机</button>
-        <button class="btn-warning" onclick="initSDK()" title="可选：仅在需要配置字体目录等高级功能时调用">初始化SDK（可选）</button>
-      </div>
-      <p style="margin-top: 10px; color: #888; font-size: 13px;">
-        💡 提示：扫描打印机无需先初始化SDK，可直接扫描
-      </p>
-      <div id="printerList" style="margin-top: 15px;"></div>
-    </div>
-
-    <!-- 条码打印测试 -->
-    <div class="grid">
-      <div class="section">
-        <div class="section-title">条码打印设置</div>
-        <div class="form-group">
-          <label>条码类型</label>
-          <select id="barcodeType">
-            <option value="20">CODE128</option>
-            <option value="24">EAN13</option>
-            <option value="23">EAN8</option>
-            <option value="26">CODE39</option>
-            <option value="28">ITF25</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>条码内容</label>
-          <input type="text" id="barcodeContent" value="12345678" placeholder="输入条码内容">
-        </div>
-        <div class="form-group">
-          <label>标签宽度 (mm)</label>
-          <input type="number" id="labelWidth" value="40">
-        </div>
-        <div class="form-group">
-          <label>标签高度 (mm)</label>
-          <input type="number" id="labelHeight" value="20">
-        </div>
-        <div class="button-group">
-          <button class="btn-primary" onclick="printBarcode()">打印条码</button>
-          <button class="btn-secondary" onclick="previewBarcode()">预览条码</button>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">快速打印示例</div>
-        <div class="button-group">
-          <button class="btn-primary" onclick="quickPrintCODE128()">快速打印 CODE128</button>
-          <button class="btn-primary" onclick="quickPrintEAN13()">快速打印 EAN13</button>
-          <button class="btn-secondary" onclick="batchPrint()">批量打印测试</button>
-        </div>
-        <div class="preview-area" id="previewArea"></div>
-      </div>
-    </div>
-
-    <!-- 產品標籤打印 -->
-    <div class="section">
-      <div class="section-title">產品標籤打印</div>
+    <div class="form">
       <div class="form-group">
-        <label>單號</label>
-        <input type="text" id="orderNo" value="5103-20251009010" placeholder="輸入單號">
-      </div>
-      <div class="form-group">
-        <label>品號</label>
-        <input type="text" id="productNo" value="M02208-00012" placeholder="輸入產品品號">
-      </div>
-      <div class="form-group">
-        <label>品名</label>
-        <input type="text" id="productName" value="HRZVV-SB(2464)24AWG-10C" placeholder="輸入產品品名">
-      </div>
-      <div class="form-group">
-        <label>規格</label>
-        <input type="text" id="productSpec" value="QS001-0027" placeholder="輸入產品規格">
-      </div>
-      <div class="form-group">
-        <label>MD 檔案選擇（批量列印用）</label>
-        <select id="mdFileSelect">
-          <option value="2025-11-14-線材.md">2025-11-14-線材.md (舊版格式)</option>
-          <option value="2025-11-19-新批次.md" selected>2025-11-19-新批次.md (9訂單+20產品)</option>
-          <option value="2025-11-20-新訂單.md">2025-11-20-新訂單.md (4訂單+4產品)</option>
+        <label>條碼類型</label>
+        <select id="barcodeType">
+          <option value="20">CODE128（通用）</option>
+          <option value="24">EAN13（13位商品碼）</option>
+          <option value="23">EAN8（8位商品碼）</option>
+          <option value="26">CODE39（字母數字）</option>
+          <option value="28">ITF25（物流）</option>
         </select>
       </div>
-      <div class="button-group">
-        <button class="btn-primary" onclick="printProductLabel()">打印單張產品標籤</button>
-        <button class="btn-secondary" onclick="batchPrintFromMD()">從 MD 檔批量打印</button>
-        <button class="btn-danger" onclick="stopPrinting()" id="stopBtn" style="display:none;">🛑 終止列印</button>
+
+      <div class="form-group">
+        <label>條碼內容</label>
+        <input type="text" id="barcodeContent" placeholder="輸入條碼內容">
       </div>
-      <p style="margin-top: 10px; color: #888; font-size: 13px;">
-        💡 提示：標籤格式為三行表格，包含品號、品名、規格<br>
-        📄 批量列印：從下拉選單選擇 MD 檔案，自動判斷格式並列印<br>
-        🎯 自動添加頭尾測試標籤，避免第一張和最後一張跑版
-      </p>
+
+      <div class="row">
+        <div class="form-group">
+          <label>標籤寬度 (mm)</label>
+          <input type="number" id="labelWidth" value="30">
+        </div>
+        <div class="form-group">
+          <label>標籤高度 (mm)</label>
+          <input type="number" id="labelHeight" value="15">
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button class="btn btn-primary" onclick="printBarcode()">🖨️ 打印</button>
+        <button class="btn btn-secondary" onclick="previewBarcode()">👁️ 預覽</button>
+      </div>
     </div>
 
-    <!-- 合併標籤測試 -->
-    <div class="section">
-      <div class="section-title">合併標籤測試（單號+產品一張）</div>
-      <div class="button-group">
-        <button class="btn-primary" onclick="testCombinedLabelWithQR()">列印標籤</button>
-        <button class="btn-secondary" onclick="previewCombinedLabel()">預覽標籤</button>
-      </div>
-      <p style="margin-top: 10px; color: #888; font-size: 13px;">
-        📋 3行格式：單號/品號/規格 + 底部條碼<br>
-        👁️ 預覽功能：先看標籤效果，避免浪費紙張
-      </p>
-      <div id="labelPreviewArea" style="margin-top: 15px; text-align: center;"></div>
+    <div class="preview" id="previewArea">
+      <span style="color:#ccc">預覽區域</span>
     </div>
 
-    <!-- 診斷測試 -->
-    <div class="section">
-      <div class="section-title">診斷測試</div>
-      <div class="button-group">
-        <button class="btn-warning" onclick="testRectangleOnly()">只印矩形（診斷截斷問題）</button>
-      </div>
-      <p style="margin-top: 10px; color: #888; font-size: 13px;">
-        🔍 用於定位畫布截斷問題：只印一個 26mm 高的矩形，檢查是否被截斷
-      </p>
-    </div>
-
-    <!-- 日志 -->
-    <div class="section">
-      <div class="section-title">操作日志</div>
-      <div class="log" id="logArea"></div>
-      <div class="button-group" style="margin-top: 10px;">
-        <button class="btn-warning" onclick="clearLog()">清空日志</button>
-      </div>
-    </div>
+    <div class="log" id="logArea"></div>
   </div>
 
   <script src="bundle.js"></script>
