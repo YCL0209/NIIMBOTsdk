@@ -172,9 +172,11 @@ export class BarcodeHelper {
     const labelHeight = this.config.labelHeight ?? 30;  // 默认标签高度 30mm
 
     // 条码尺寸：如果用户指定了就用指定的，否则基于标签尺寸计算合理的默认值
-    // 参考官方 DEMO: 50x30 标签使用 36x16 条码，即 labelSize - margin*7
-    const barcodeWidth = this.config.width ?? (labelWidth - margin * 7);
-    const barcodeHeight = this.config.height ?? (labelHeight - margin * 7);
+    // 新公式：適合所有尺寸的標籤（包括小標籤如 30x15mm）
+    // - 寬度：標籤寬度 - 4mm 邊距，或至少 80% 標籤寬度
+    // - 高度：標籤高度 - 8mm 邊距，或至少 60% 標籤高度
+    const barcodeWidth = this.config.width ?? Math.max(labelWidth - margin * 2, labelWidth * 0.8);
+    const barcodeHeight = this.config.height ?? Math.max(labelHeight - margin * 4, labelHeight * 0.6);
     const fontSize = this.config.fontSize ?? DEFAULT_BARCODE_PARAMS.fontSize;
 
     return {
