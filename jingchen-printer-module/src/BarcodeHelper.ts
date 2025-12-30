@@ -11,7 +11,7 @@ import {
   TextPosition,
   InitDrawingBoardParams
 } from './types';
-import { DEFAULT_BARCODE_PARAMS, BARCODE_CONTENT_LENGTH, DEFAULT_FONT_PATH } from './config';
+import { DEFAULT_BARCODE_PARAMS, BARCODE_CONTENT_LENGTH, DEFAULT_FONT_PATH, SDK_DELAYS, delay } from './config';
 import { JingchenPrinter } from './JingchenPrinter';
 
 /**
@@ -228,6 +228,18 @@ export class BarcodePrinter {
   }
 
   /**
+   * 應用配置到 BarcodeHelper（內部輔助方法）
+   */
+  private applyConfig(helper: BarcodeHelper, config: Partial<BarcodeGeneratorConfig>): void {
+    if (config.width !== undefined) helper.setSize(config.width, config.height!);
+    if (config.labelWidth !== undefined) helper.setLabelSize(config.labelWidth, config.labelHeight!);
+    if (config.margin !== undefined) helper.setMargin(config.margin);
+    if (config.fontSize !== undefined) helper.setFontSize(config.fontSize);
+    if (config.textPosition !== undefined) helper.setTextPosition(config.textPosition);
+    if (config.rotate !== undefined) helper.setRotate(config.rotate);
+  }
+
+  /**
    * 快速打印条码 - 一步完成开始任务、初始化画板、绘制条码、提交打印、结束任务
    * @param config 条码配置
    * @param printCount 打印份数，默认为1
@@ -245,13 +257,7 @@ export class BarcodePrinter {
     const helper = new BarcodeHelper()
       .setContent(config.content)
       .setType(config.type);
-
-    if (config.width !== undefined) helper.setSize(config.width, config.height!);
-    if (config.labelWidth !== undefined) helper.setLabelSize(config.labelWidth, config.labelHeight!);
-    if (config.margin !== undefined) helper.setMargin(config.margin);
-    if (config.fontSize !== undefined) helper.setFontSize(config.fontSize);
-    if (config.textPosition !== undefined) helper.setTextPosition(config.textPosition);
-    if (config.rotate !== undefined) helper.setRotate(config.rotate);
+    this.applyConfig(helper, config);
 
     const boardParams = helper.buildBoardParams();
     const barcodeParams = helper.build();
@@ -259,8 +265,7 @@ export class BarcodePrinter {
     // 确保 SDK 已初始化并等待打印机准备就绪
     if (!(this.printer as any).isSdkInitialized) {
       await this.printer.initSDK();
-      // 等待 2 秒让打印机完全准备好
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await delay(SDK_DELAYS.AFTER_INIT);
     }
 
     // 1. 开始打印任务
@@ -275,9 +280,8 @@ export class BarcodePrinter {
     // 4. 提交打印任务
     await this.printer.commitJob(printCount);
 
-    // 等待 SDK 完成异步数据处理（关键！）
-    // SDK 的 commitJob 会发送多次异步响应，需要等待所有响应处理完成
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // 等待 SDK 完成异步数据处理
+    await delay(SDK_DELAYS.AFTER_COMMIT);
 
     // 5. 结束任务
     await this.printer.endJob();
@@ -290,13 +294,7 @@ export class BarcodePrinter {
     const helper = new BarcodeHelper()
       .setContent(config.content)
       .setType(config.type);
-
-    if (config.width !== undefined) helper.setSize(config.width, config.height!);
-    if (config.labelWidth !== undefined) helper.setLabelSize(config.labelWidth, config.labelHeight!);
-    if (config.margin !== undefined) helper.setMargin(config.margin);
-    if (config.fontSize !== undefined) helper.setFontSize(config.fontSize);
-    if (config.textPosition !== undefined) helper.setTextPosition(config.textPosition);
-    if (config.rotate !== undefined) helper.setRotate(config.rotate);
+    this.applyConfig(helper, config);
 
     const boardParams = helper.buildBoardParams();
     const barcodeParams = helper.build();
@@ -339,13 +337,7 @@ export class BarcodePrinter {
       const helper = new BarcodeHelper()
         .setContent(content)
         .setType(config.type);
-
-      if (config.width !== undefined) helper.setSize(config.width, config.height!);
-      if (config.labelWidth !== undefined) helper.setLabelSize(config.labelWidth, config.labelHeight!);
-      if (config.margin !== undefined) helper.setMargin(config.margin);
-      if (config.fontSize !== undefined) helper.setFontSize(config.fontSize);
-      if (config.textPosition !== undefined) helper.setTextPosition(config.textPosition);
-      if (config.rotate !== undefined) helper.setRotate(config.rotate);
+      this.applyConfig(helper, config);
 
       const boardParams = helper.buildBoardParams();
       const barcodeParams = helper.build();
@@ -358,6 +350,7 @@ export class BarcodePrinter {
 
       // 提交当前页的打印任务
       await this.printer.commitJob(printCount);
+      await delay(SDK_DELAYS.AFTER_COMMIT);
     }
 
     // 3. 结束打印任务

@@ -425,6 +425,148 @@ await printer.endJob();
 - `code39(content: string, width?: number, height?: number): BarcodeGeneratorConfig`
 - `itf25(content: string, width?: number, height?: number): BarcodeGeneratorConfig`
 
+## 🛠️ Helpers 模塊（進階封裝）
+
+這些 Helpers 封裝了常用操作，並隱藏 SDK 的已知 Bug 和 Workaround。
+
+### PrintJob 類
+
+封裝打印任務管理，自動處理 SDK 的 count=1 Bug。
+
+```typescript
+import { PrintJob, LabelBuilder } from './src';
+
+// 創建打印任務（內部自動處理 SDK bug）
+const job = await PrintJob.create(printer, {
+  count: 1,           // 每種標籤打印份數
+  density: 3,         // 打印濃度
+  labelWidth: 50,     // 標籤寬度
+  labelHeight: 30     // 標籤高度
+});
+
+// 打印多個標籤
+for (const product of products) {
+  await job.printLabel(async () => {
+    const builder = new LabelBuilder(printer, 50, 30);
+    await builder
+      .drawBorder()
+      .then(b => b.drawText(3, 4, `品號：${product.no}`))
+      .then(b => b.drawText(3, 11, `品名：${product.name}`));
+  });
+}
+
+await job.end();
+```
+
+**注意**：PrintJob 會在 count ≤ 1 時自動添加佔位標籤，以繞過 SDK 的 count=1 bug。
+
+### LabelBuilder 類
+
+標籤繪製 Fluent API，簡化繪製操作。
+
+```typescript
+import { LabelBuilder, BarcodeType } from './src';
+
+const builder = new LabelBuilder(printer, 50, 30);
+
+await builder
+  .drawBorder(2, 0.5)                    // 繪製邊框
+  .then(b => b.drawText(3, 4, '品號：ABC-001', { fontSize: 3 }))
+  .then(b => b.drawHorizontalLine(10))   // 水平分隔線
+  .then(b => b.drawBarcode(3, 12, 'ABC-001', BarcodeType.CODE128));
+```
+
+### LabelTemplates 類
+
+預設標籤模板（靜態方法）。
+
+```typescript
+import { LabelTemplates } from './src';
+
+// 產品標籤
+await LabelTemplates.productLabel(printer, 'ABC-001', '產品名稱', '規格說明');
+
+// 單號標籤
+await LabelTemplates.orderLabel(printer, '5103-20251009010');
+
+// 帶條碼的標籤
+await LabelTemplates.barcodeLabel(printer, '5103-001', 'M02208-00012', 'QS001-0027');
+```
+
+### MDParser 類
+
+從 Markdown 檔案解析產品和訂單資料。
+
+```typescript
+import { MDParser } from './src';
+
+const mdContent = `
+## 單號: 5103-20251009010
+
+品號: ABC-001
+品名: 產品名稱
+規格: 規格說明
+`;
+
+// 自動判斷格式
+const result = MDParser.parse(mdContent);
+
+if (result.type === 'orders') {
+  console.log('訂單數:', result.data.length);
+} else {
+  console.log('產品數:', result.data.length);
+}
+
+// 計算標籤總數
+const labelCount = MDParser.countLabels(result.data as Order[]);
+```
+
+### SDK_DELAYS 常量
+
+可配置的 SDK 延遲時間常量，用於調整 SDK 異步處理等待時間。
+
+```typescript
+import { SDK_DELAYS, delay } from './src';
+
+// 使用預設延遲
+await delay(SDK_DELAYS.AFTER_INIT);     // initSDK 後等待
+await delay(SDK_DELAYS.AFTER_COMMIT);   // commitJob 後等待
+await delay(SDK_DELAYS.BETWEEN_DRAWS);  // 繪製操作之間
+
+// 常量值
+SDK_DELAYS = {
+  AFTER_INIT: 2000,        // initSDK 後等待（毫秒）
+  AFTER_COMMIT: 1000,      // commitJob 後等待
+  BETWEEN_DRAWS: 100,      // 繪製操作之間
+  AFTER_DRAW_COMPLETE: 300,// 繪製完成後
+  RETRY_INTERVAL: 1000     // 重試間隔
+}
+```
+
+## ⚠️ SDK 限制與已知問題
+
+原廠 SDK 有以下限制，本模塊已封裝相應的 Workaround：
+
+### 1. 一問一答串行模式
+- SDK 只能同時處理一個請求，必須等待回應後才能發送下一個
+- **處理方式**：JingchenPrinter 內部使用 Promise 隊列管理
+
+### 2. apiName 作為回應 Key
+- SDK 回應只包含 `apiName`，不支持 `requestId`
+- 這是 SDK 設計限制，不是 Bug
+
+### 3. count=1 Bug
+- 當 startJob 的 count=1 時，可能出現異常行為
+- **處理方式**：PrintJob 類會自動添加佔位標籤
+
+### 4. 需要延遲等待
+- SDK 沒有提供 ready 事件，需要 setTimeout 等待
+- **處理方式**：使用 SDK_DELAYS 常量統一管理
+
+### 5. drawGraph 矩形底線消失
+- drawGraph 的 graphType=3（矩形）可能底線無法顯示
+- **處理方式**：LabelBuilder.drawBorder() 使用 4 條線繪製
+
 ## 📋 类型定义
 
 ### LabelType（标签类型枚举）

@@ -12,8 +12,11 @@ import {
   EventType,
   PrinterInfo,
   RotateAngle,
-  QRCodeType
+  QRCodeType,
+  SDK_DELAYS,
+  delay
 } from '../src/index';
+import { MDParser, ProductData, Order } from '../src/helpers';
 
 // 全局变量
 let printer: JingchenPrinter;
@@ -338,104 +341,7 @@ async function printProductLabel() {
 }
 
 // ==================== MD 檔案解析與批量打印 ====================
-
-interface ProductData {
-  productNo: string;
-  productName: string;
-  productSpec: string;
-}
-
-interface Order {
-  orderNo: string;
-  products: ProductData[];
-}
-
-/**
- * 從 MD 檔案內容解析產品資料（舊版，保留向後兼容）
- */
-function parseMDProducts(mdContent: string): ProductData[] {
-  const products: ProductData[] = [];
-  const lines = mdContent.split('\n');
-
-  let currentProduct: Partial<ProductData> = {};
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    if (trimmed.startsWith('品號:')) {
-      currentProduct.productNo = trimmed.replace('品號:', '').trim();
-    } else if (trimmed.startsWith('品名:')) {
-      currentProduct.productName = trimmed.replace('品名:', '').trim();
-    } else if (trimmed.startsWith('規格:')) {
-      currentProduct.productSpec = trimmed.replace('規格:', '').trim();
-
-      // 當三個欄位都有了，就加入產品列表
-      if (currentProduct.productNo && currentProduct.productName && currentProduct.productSpec) {
-        products.push(currentProduct as ProductData);
-        currentProduct = {};
-      }
-    }
-  }
-
-  return products;
-}
-
-/**
- * 從 MD 檔案內容解析訂單與產品（新版，支持單號）
- */
-function parseMDOrders(mdContent: string): Order[] {
-  const orders: Order[] = [];
-  const lines = mdContent.split('\n');
-
-  let currentOrder: Order | null = null;
-  let currentProduct: Partial<ProductData> = {};
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    // 識別單號（支持兩種格式：## 單號: XXX 或 ## XXX）
-    if (trimmed.startsWith('## 單號:') || (trimmed.startsWith('## ') && !trimmed.startsWith('### '))) {
-      // 保存前一個產品
-      if (currentProduct.productNo && currentProduct.productName && currentProduct.productSpec && currentOrder) {
-        currentOrder.products.push(currentProduct as ProductData);
-        currentProduct = {};
-      }
-
-      // 保存前一個訂單
-      if (currentOrder && currentOrder.products.length > 0) {
-        orders.push(currentOrder);
-      }
-
-      // 創建新訂單
-      const orderNo = trimmed.replace('## 單號:', '').replace('##', '').trim();
-      currentOrder = { orderNo, products: [] };
-    }
-    // 識別產品數據
-    else if (trimmed.startsWith('品號:')) {
-      // 保存前一個產品
-      if (currentProduct.productNo && currentProduct.productName && currentProduct.productSpec && currentOrder) {
-        currentOrder.products.push(currentProduct as ProductData);
-      }
-      currentProduct = { productNo: trimmed.replace('品號:', '').trim() };
-    } else if (trimmed.startsWith('品名:')) {
-      currentProduct.productName = trimmed.replace('品名:', '').trim();
-    } else if (trimmed.startsWith('規格:')) {
-      currentProduct.productSpec = trimmed.replace('規格:', '').trim();
-    }
-  }
-
-  // 保存最後一個產品
-  if (currentProduct.productNo && currentProduct.productName && currentProduct.productSpec && currentOrder) {
-    currentOrder.products.push(currentProduct as ProductData);
-  }
-
-  // 保存最後一個訂單
-  if (currentOrder && currentOrder.products.length > 0) {
-    orders.push(currentOrder);
-  }
-
-  return orders;
-}
+// 使用 helpers/MDParser 進行 MD 檔案解析
 
 /**
  * 用 4 條線畫矩形（繞過 drawGraph graphType:3 的底線消失 bug）
@@ -1308,14 +1214,14 @@ async function batchPrintFromMD() {
     const mdContent = await response.text();
     log('MD 檔案讀取成功', 'success');
 
-    // 自動判斷格式：檢查是否包含單號標記
-    const hasOrderNumbers = mdContent.includes('## 單號:') || /^## \d{4,}$/m.test(mdContent);
+    // 使用 MDParser 自動判斷格式並解析
+    const parseResult = MDParser.parse(mdContent);
 
-    if (hasOrderNumbers) {
+    if (parseResult.type === 'orders') {
       // 新版格式：有單號
       log('偵測到新版格式（含單號）', 'info');
 
-      const orders = parseMDOrders(mdContent);
+      const orders = parseResult.data;
       log(`解析到 ${orders.length} 個訂單`, 'success');
 
       if (orders.length === 0) {
@@ -1337,7 +1243,7 @@ async function batchPrintFromMD() {
       // 舊版格式：只有產品
       log('偵測到舊版格式（僅產品）', 'info');
 
-      const products = parseMDProducts(mdContent);
+      const products = parseResult.data;
       log(`解析到 ${products.length} 個產品`, 'success');
 
       if (products.length === 0) {

@@ -73,7 +73,10 @@ export const COMMON_LABEL_SIZES = {
   PRICE: { width: 40, height: 20 },
 
   // 物流标签
-  LOGISTICS: { width: 100, height: 100 }
+  LOGISTICS: { width: 100, height: 100 },
+
+  // 熱轉印標籤
+  TT_30x15_2R: { width: 30, height: 15 }   // TT30*15 2R 雙排熱轉印標籤
 };
 
 /**
@@ -142,3 +145,26 @@ export const API_TIMEOUT = {
   wifi: 25000,        // WiFi 相关操作超时时间更长
   print: 30000        // 打印操作超时时间
 };
+
+/**
+ * SDK 延遲配置 (ms)
+ * 原廠 SDK 沒有提供 ready 事件，必須使用固定延遲等待
+ */
+export const SDK_DELAYS = {
+  /** initSDK 後等待打印機準備就緒 */
+  AFTER_INIT: 2000,
+  /** commitJob 後等待 SDK 異步處理完成 */
+  AFTER_COMMIT: 1000,
+  /** 繪製操作之間的間隔（SDK 異步處理） */
+  BETWEEN_DRAWS: 100,
+  /** 繪製完成後的額外等待 */
+  AFTER_DRAW_COMPLETE: 300,
+  /** startJob 重試間隔（打印機忙碌時） */
+  RETRY_INTERVAL: 1000,
+} as const;
+
+/**
+ * 延遲輔助函數
+ */
+export const delay = (ms: number): Promise<void> =>
+  new Promise(resolve => setTimeout(resolve, ms));
