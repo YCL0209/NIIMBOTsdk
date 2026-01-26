@@ -103,6 +103,76 @@
       max-height: 100px;
       overflow-y: auto;
     }
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #eee;
+    }
+    .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 14px;
+      color: #666;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab:hover { background: #f5f5f5; }
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+      font-weight: 600;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .file-upload {
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 16px;
+    }
+    .file-upload:hover { border-color: #667eea; background: #f8f9ff; }
+    .file-upload.has-file { border-color: #4CAF50; background: #f0fff0; }
+    .file-upload input { display: none; }
+    .file-name { font-size: 12px; color: #666; margin-top: 8px; }
+    .parse-result {
+      background: #f9f9f9;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+    .parse-item {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    .parse-item:last-child { border-bottom: none; }
+    .parse-item .no { font-weight: 600; color: #667eea; }
+    .parse-item .name { color: #333; }
+    .parse-item .spec { color: #888; font-size: 12px; }
+    .parse-summary {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+    .progress-bar {
+      height: 4px;
+      background: #eee;
+      border-radius: 2px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      width: 0%;
+      transition: width 0.3s;
+    }
   </style>
 </head>
 <body>
@@ -113,42 +183,75 @@
       <button id="rescanBtn" class="rescan-btn" onclick="rescan()" style="display:none">🔄 重新掃描</button>
     </div>
 
-    <div class="form">
-      <div class="form-group">
-        <label>條碼類型</label>
-        <select id="barcodeType">
-          <option value="20">CODE128（通用）</option>
-          <option value="24">EAN13（13位商品碼）</option>
-          <option value="23">EAN8（8位商品碼）</option>
-          <option value="26">CODE39（字母數字）</option>
-          <option value="28">ITF25（物流）</option>
-        </select>
-      </div>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('single')">單張列印</div>
+      <div class="tab" onclick="switchTab('batch')">批量列印</div>
+    </div>
 
-      <div class="form-group">
-        <label>條碼內容</label>
-        <input type="text" id="barcodeContent" placeholder="輸入條碼內容">
-      </div>
-
-      <div class="row">
+    <!-- 單張列印 -->
+    <div id="tab-single" class="tab-content active">
+      <div class="form">
         <div class="form-group">
-          <label>標籤寬度 (mm)</label>
-          <input type="number" id="labelWidth" value="30">
+          <label>條碼類型</label>
+          <select id="barcodeType">
+            <option value="20">CODE128（通用）</option>
+            <option value="24">EAN13（13位商品碼）</option>
+            <option value="23">EAN8（8位商品碼）</option>
+            <option value="26">CODE39（字母數字）</option>
+            <option value="28">ITF25（物流）</option>
+          </select>
         </div>
+
         <div class="form-group">
-          <label>標籤高度 (mm)</label>
-          <input type="number" id="labelHeight" value="15">
+          <label>條碼內容</label>
+          <input type="text" id="barcodeContent" placeholder="輸入條碼內容">
+        </div>
+
+        <div class="row">
+          <div class="form-group">
+            <label>標籤寬度 (mm)</label>
+            <input type="number" id="labelWidth" value="30">
+          </div>
+          <div class="form-group">
+            <label>標籤高度 (mm)</label>
+            <input type="number" id="labelHeight" value="15">
+          </div>
+        </div>
+
+        <div class="buttons">
+          <button class="btn btn-primary" onclick="printBarcode()">🖨️ 打印</button>
+          <button class="btn btn-secondary" onclick="previewBarcode()">👁️ 預覽</button>
         </div>
       </div>
 
-      <div class="buttons">
-        <button class="btn btn-primary" onclick="printBarcode()">🖨️ 打印</button>
-        <button class="btn btn-secondary" onclick="previewBarcode()">👁️ 預覽</button>
+      <div class="preview" id="previewArea">
+        <span style="color:#ccc">預覽區域</span>
       </div>
     </div>
 
-    <div class="preview" id="previewArea">
-      <span style="color:#ccc">預覽區域</span>
+    <!-- 批量列印 -->
+    <div id="tab-batch" class="tab-content">
+      <div class="form">
+        <div class="file-upload" id="fileUpload" onclick="document.getElementById('mdFile').click()">
+          <div>📄 點擊選擇 MD 檔案</div>
+          <div class="file-name" id="fileName"></div>
+          <input type="file" id="mdFile" accept=".md" onchange="handleFileSelect(event)">
+        </div>
+
+        <div id="parseResult" class="parse-result" style="display:none">
+          <div class="parse-summary" id="parseSummary"></div>
+          <div id="parseItems"></div>
+        </div>
+
+        <div class="buttons">
+          <button class="btn btn-primary" id="batchPrintBtn" onclick="batchPrint()" disabled>🖨️ 批量列印</button>
+          <button class="btn btn-secondary" onclick="clearFile()">🗑️ 清除</button>
+        </div>
+
+        <div class="progress-bar" id="progressBar" style="display:none">
+          <div class="fill" id="progressFill"></div>
+        </div>
+      </div>
     </div>
 
     <div class="log" id="logArea"></div>
