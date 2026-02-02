@@ -17,6 +17,9 @@ const router = Router();
 // Print mutex — SDK is stateful, one job at a time
 let printing = false;
 
+// Remember last connected printer (SDK loses device list after endJob)
+let lastPrinter: { name: string; port: number } | null = null;
+
 interface PrintRequest {
   printer?: {
     name?: string;
@@ -59,15 +62,31 @@ router.post('/', async (req: Request, res: Response) => {
     await delay(SDK_DELAYS.AFTER_INIT);
 
     // 2. Scan and connect printer
-    const printers = await commands.scanUSBPrinters();
-    if (printers.length === 0) {
-      res.status(503).json({ error: 'No USB printers found' });
-      return;
+    let targetName: string;
+    let targetPort: number;
+
+    if (body.printer?.name && body.printer?.port !== undefined) {
+      // Explicit printer specified, skip scan
+      targetName = body.printer.name;
+      targetPort = body.printer.port;
+    } else {
+      const printers = await commands.scanUSBPrinters();
+      if (printers.length > 0) {
+        targetName = printers[0].printerName;
+        targetPort = printers[0].port;
+      } else if (lastPrinter) {
+        // Fallback to last known printer
+        console.log(`[PRINT] No printers found, using last known: ${lastPrinter.name}`);
+        targetName = lastPrinter.name;
+        targetPort = lastPrinter.port;
+      } else {
+        res.status(503).json({ error: 'No USB printers found' });
+        return;
+      }
     }
 
-    const targetName = body.printer?.name || printers[0].printerName;
-    const targetPort = body.printer?.port ?? printers[0].port;
     await commands.connectPrinter(targetName, targetPort);
+    lastPrinter = { name: targetName, port: targetPort };
 
     // 3. Resolve label type / print mode
     let labelType: number = DEFAULT_LABEL_TYPE;
