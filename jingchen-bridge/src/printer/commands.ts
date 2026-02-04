@@ -1,6 +1,13 @@
 import { sendMessage, ApiResponse } from './client';
 import { SDK_DELAYS, delay } from '../config';
 
+/** Remove undefined values from object to prevent overwriting defaults */
+function defined<T extends Record<string, any>>(obj: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) => v !== undefined)
+  ) as Partial<T>;
+}
+
 // ==================== SDK Init ====================
 
 export async function initSDK(): Promise<void> {
@@ -125,7 +132,7 @@ export async function drawText(params: {
     lineSpacing: 1,
     lineMode: 6,
     fontStyle: [false, false, false, false],
-    ...params,
+    ...defined(params),
   });
 }
 
@@ -146,7 +153,7 @@ export async function drawBarcode(params: {
     fontSize: 3.2,
     textHeight: 3.2,
     textPosition: 0,
-    ...params,
+    ...defined(params),
   });
 }
 
@@ -162,7 +169,7 @@ export async function drawQRCode(params: {
   await sendMessage('DrawLableQrCode', {
     codeType: 31, // QR_CODE
     rotate: 0,
-    ...params,
+    ...defined(params),
   });
 }
 
@@ -187,7 +194,7 @@ export async function drawImage(params: {
     rotate: 0,
     imageProcessingType: 0,
     imageProcessingValue: 127,
-    ...params,
+    ...defined(params),
     imageData,
   });
 }
